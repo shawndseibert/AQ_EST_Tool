@@ -1,0 +1,1434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AccuQuote XML to PSL</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0f1419;
+      color: #e5e7eb;
+      min-height: 100vh;
+      padding: 24px 14px;
+    }
+
+    .app {
+      max-width: 1100px;
+      margin: 0 auto;
+      background: #1a1f26;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+      overflow: hidden;
+    }
+
+    .hero {
+      background: #161b22;
+      padding: 16px 24px;
+      border-bottom: 1px solid #2d3748;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: 0.9rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: transparent;
+      background-image: linear-gradient(
+        110deg,
+        #5f6672 0%,
+        #7a8492 35%,
+        #a5b4c9 50%,
+        #7a8492 65%,
+        #5f6672 100%
+      );
+      background-size: 220% 100%;
+      background-position: 140% 0;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: heroTitleSwipe 4.8s ease-in-out infinite;
+    }
+
+    .hero p {
+      margin: 5px 0 0;
+      color: #4b5563;
+      font-size: 0.84rem;
+    }
+
+    @keyframes heroTitleSwipe {
+      0% { background-position: 140% 0; }
+      30% { background-position: 140% 0; }
+      100% { background-position: -60% 0; }
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .card {
+      background: #242b35;
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid #2d3748;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .card h2 {
+      color: #60a5fa;
+      margin: 0 0 16px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .stack { display: grid; gap: 12px; }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .file-actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .file-actions button {
+      width: 100%;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #9ca3af;
+      font-weight: 600;
+    }
+
+    input, textarea, button {
+      font: inherit;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="file"],
+    textarea {
+      width: 100%;
+      padding: 10px 12px;
+      background: #1a1f26;
+      border: 1px solid #2d3748;
+      border-radius: 8px;
+      color: #e5e7eb;
+      font-size: 0.9rem;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    input[type="file"]:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #3b82f6;
+      background: #1f2937;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    input[type="file"] {
+      color: #9ca3af;
+      padding: 8px 12px;
+    }
+
+    input[type="file"]::file-selector-button {
+      margin-right: 12px;
+      border: 1px solid #374151;
+      border-radius: 7px;
+      padding: 7px 12px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #d1d5db;
+      background: linear-gradient(180deg, #2b3441 0%, #1f2937 100%);
+      cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.12s ease;
+    }
+
+    input[type="file"]::file-selector-button:hover {
+      background: linear-gradient(180deg, #334155 0%, #243041 100%);
+      border-color: #4b5563;
+      transform: translateY(-1px);
+    }
+
+    input[type="file"]::file-selector-button:active {
+      transform: translateY(0);
+    }
+
+    input[type="file"]::-webkit-file-upload-button {
+      margin-right: 12px;
+      border: 1px solid #374151;
+      border-radius: 7px;
+      padding: 7px 12px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #d1d5db;
+      background: linear-gradient(180deg, #2b3441 0%, #1f2937 100%);
+      cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.12s ease;
+    }
+
+    input[type="file"]::-webkit-file-upload-button:hover {
+      background: linear-gradient(180deg, #334155 0%, #243041 100%);
+      border-color: #4b5563;
+      transform: translateY(-1px);
+    }
+
+    input[type="file"]::-webkit-file-upload-button:active {
+      transform: translateY(0);
+    }
+
+    textarea {
+      min-height: 320px;
+      resize: vertical;
+      font-family: "Consolas", "Courier New", monospace;
+      font-size: 0.84rem;
+      line-height: 1.5;
+    }
+
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-size: 0.84rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      transition: transform 0.12s ease, box-shadow 0.2s, background 0.2s;
+    }
+
+    button:hover { transform: translateY(-1px); }
+
+    .btn-primary {
+      background: #3b82f6;
+      color: white;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-primary:hover {
+      background: #2563eb;
+      box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-secondary {
+      background: #10b981;
+      color: white;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-secondary:hover {
+      background: #059669;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-ghost {
+      background: #1f2937;
+      color: #9ca3af;
+      border: 1px solid #374151;
+    }
+
+    .btn-ghost:hover {
+      background: #2d3748;
+      color: #d1d5db;
+    }
+
+    .meta {
+      font-size: 0.82rem;
+      color: #d1d5db;
+      background: #1a1f26;
+      border: 1px solid #2d3748;
+      border-radius: 8px;
+      padding: 10px 12px;
+      white-space: pre-line;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+
+    th, td {
+      text-align: left;
+      border-bottom: 1px solid #2d3748;
+      padding: 8px 8px;
+      vertical-align: top;
+    }
+
+    th {
+      color: #6b7280;
+      font-size: 0.74rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      position: sticky;
+      top: 0;
+      background: #242b35;
+    }
+
+    td { color: #d1d5db; }
+
+    .table-wrap {
+      max-height: none;
+      overflow: auto;
+      border: 1px solid #2d3748;
+      border-radius: 8px;
+    }
+
+    .table-container {
+      position: relative;
+      margin-top: 12px;
+      min-height: 140px;
+    }
+
+    .table-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(18, 22, 28, 0.82);
+      border-radius: 8px;
+      z-index: 2;
+      gap: 6px;
+      padding: 24px;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .table-overlay.hidden {
+      display: none;
+    }
+
+    .overlay-title {
+      color: #9ca3af;
+      font-size: 0.86rem;
+      font-weight: 500;
+    }
+
+    .overlay-sub {
+      color: #4b5563;
+      font-size: 0.8rem;
+    }
+
+    .output-card {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .output-card .table-container {
+      flex: 1;
+      min-height: 140px;
+    }
+
+    .mono { font-family: "Consolas", "Courier New", monospace; }
+
+    .output-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .output-header label {
+      margin-bottom: 0;
+    }
+
+    #toggleOutputBtn {
+      padding: 7px 12px;
+      font-size: 0.74rem;
+    }
+
+    .output-panel {
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      margin-bottom: 0;
+      transition: max-height 0.25s ease, opacity 0.2s ease, margin-bottom 0.2s ease;
+    }
+
+    .output-panel.expanded {
+      max-height: 520px;
+      opacity: 1;
+      margin-bottom: 12px;
+    }
+
+    #headerSection {
+      border-top-color: #2d3748 !important;
+    }
+
+    #headerSection label span {
+      color: #4b5563 !important;
+    }
+
+    @media (max-width: 930px) {
+      .content { grid-template-columns: 1fr; }
+      textarea { min-height: 220px; }
+      .output-panel.expanded { max-height: 360px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="hero">
+      <h1>AccuQuote XML to POS PSL</h1>
+    </header>
+
+    <main class="content">
+      <section class="card">
+        <h2>Import</h2>
+        <div class="stack">
+          <div>
+            <label for="xmlFile">AccuQuote XML File</label>
+            <input type="file" id="xmlFile" accept=".xml,text/xml,application/xml" />
+          </div>
+
+          <div>
+            <label for="filenameSuffix">PSL Filename</label>
+            <input type="text" id="filenameSuffix" value="estimate_script.psl" />
+          </div>
+
+          <div class="row file-actions">
+            <button id="downloadBtn" class="btn-secondary" type="button">Download PSL</button>
+            <button id="copyBtn" class="btn-ghost" type="button">Copy for Terminal</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card output-card">
+        <h2>Output</h2>
+
+        <div id="meta" class="meta" style="display:none; margin-bottom:10px;"></div>
+
+        <div class="output-header">
+          <label for="pslOutput">Generated PSL Script</label>
+          <button id="toggleOutputBtn" class="btn-ghost" type="button" aria-expanded="false">Show Script</button>
+        </div>
+
+        <div id="outputPanel" class="output-panel">
+          <textarea id="pslOutput" spellcheck="false"></textarea>
+        </div>
+
+        <div class="stack">
+          <div>
+            <label for="vendorCode">Vendor Code</label>
+            <input type="text" id="vendorCode" value="" maxlength="4" placeholder="Auto-detected" />
+          </div>
+
+          <div id="headerSection" style="display:none; margin-top:4px; padding-top:10px; border-top:1px solid var(--line);">
+            <label style="margin-bottom:8px;">
+              Estimate Header Lines
+              <span style="font-size:0.75rem; font-weight:400; text-transform:none; color:#9ca3af;">(editable - appear at top of PSL)</span>
+            </label>
+            <input type="text" id="headerLine1" placeholder="e.g. PLYGEM 1500 SERIES" style="margin-bottom:6px;" />
+            <input type="text" id="headerLine2" placeholder="e.g. BEVELED WHITE/WHITE" style="margin-bottom:6px;" />
+            <input type="text" id="headerLine3" placeholder="e.g. LOW-E GBG W/SCREENS" />
+          </div>
+        </div>
+
+        <div class="table-container">
+          <div id="tableOverlay" class="table-overlay">
+            <span class="overlay-title">Load an XML file, then click Download PSL.</span>
+            <span class="overlay-sub">No quote loaded yet.</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Qty</th>
+                  <th>Unit Cost</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody id="previewBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const state = {
+      quoteName: "",
+      quoteNumber: "",
+      quoteBrand: "",
+      lineItems: [],
+      generatedScript: "",
+      lastQuoteAttrs: null
+    };
+
+    const xmlFileInput = document.getElementById("xmlFile");
+    const vendorCodeInput = document.getElementById("vendorCode");
+    const filenameSuffixInput = document.getElementById("filenameSuffix");
+    const metaBox = document.getElementById("meta");
+    const outputBox = document.getElementById("pslOutput");
+    const previewBody = document.getElementById("previewBody");
+    const outputPanel = document.getElementById("outputPanel");
+    const toggleOutputBtn = document.getElementById("toggleOutputBtn");
+
+    document.getElementById("downloadBtn").addEventListener("click", downloadScript);
+    document.getElementById("copyBtn").addEventListener("click", copyScript);
+    toggleOutputBtn.addEventListener("click", toggleOutputPanel);
+
+    window.addEventListener("DOMContentLoaded", initializePageState);
+    window.addEventListener("pageshow", event => {
+      if (event.persisted) initializePageState();
+    });
+
+    xmlFileInput.addEventListener("change", () => {
+      if (xmlFileInput.files && xmlFileInput.files[0]) {
+        onParseClick();
+      }
+    });
+
+    vendorCodeInput.addEventListener("input", () => {
+      vendorCodeInput.value = normalizeVendorCode(vendorCodeInput.value);
+      if (state.lineItems.length > 0) {
+        if (state.lastQuoteAttrs) {
+          populateHeaderInputs(state.lastQuoteAttrs, state.quoteBrand || brandFromVendorCode(vendorCodeInput.value));
+        }
+        buildAndRenderScript();
+      }
+    });
+
+    ["headerLine1", "headerLine2", "headerLine3"].forEach(id => {
+      const node = document.getElementById(id);
+      node.addEventListener("input", () => {
+        if (state.lineItems.length > 0) buildAndRenderScript();
+      });
+    });
+
+    function setOutputPanelExpanded(isExpanded) {
+      outputPanel.classList.toggle("expanded", isExpanded);
+      toggleOutputBtn.setAttribute("aria-expanded", String(isExpanded));
+      toggleOutputBtn.textContent = isExpanded ? "Hide Script" : "Show Script";
+    }
+
+    function toggleOutputPanel() {
+      const isExpanded = outputPanel.classList.contains("expanded");
+      setOutputPanelExpanded(!isExpanded);
+    }
+
+    function normalizeVendorCode(raw) {
+      return String(raw || "")
+        .toUpperCase()
+        .replace(/[^A-Z]/g, "")
+        .slice(0, 4);
+    }
+
+    function initializePageState() {
+      state.quoteName = "";
+      state.quoteNumber = "";
+      state.quoteBrand = "";
+      state.lineItems = [];
+      state.generatedScript = "";
+      state.lastQuoteAttrs = null;
+
+      xmlFileInput.value = "";
+      filenameSuffixInput.value = "estimate_script.psl";
+      vendorCodeInput.value = "";
+
+      outputBox.value = "";
+      metaBox.textContent = "";
+      metaBox.style.display = "none";
+      previewBody.innerHTML = '<tr><td colspan="4">No line items found.</td></tr>';
+      const overlay = document.getElementById("tableOverlay");
+      if (overlay) overlay.classList.remove("hidden");
+
+      ["headerLine1", "headerLine2", "headerLine3"].forEach(id => {
+        const input = document.getElementById(id);
+        if (input) input.value = "";
+      });
+      const headerSection = document.getElementById("headerSection");
+      if (headerSection) headerSection.style.display = "none";
+
+      setOutputPanelExpanded(false);
+    }
+
+    function readFileAsText(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error || new Error("Failed to read file."));
+        reader.readAsText(file);
+      });
+    }
+
+    async function onParseClick() {
+      const file = xmlFileInput.files && xmlFileInput.files[0];
+      if (!file) return;
+
+      try {
+        const xmlText = await readFileAsText(file);
+        parseAccuQuoteXml(xmlText, file.name);
+        buildAndRenderScript();
+        const overlay = document.getElementById("tableOverlay");
+        if (overlay) overlay.classList.add("hidden");
+      } catch (error) {
+        console.error("Parse failed:", error);
+      }
+    }
+
+    function parseAccuQuoteXml(xmlText, sourceFileName) {
+      const doc = new DOMParser().parseFromString(xmlText, "application/xml");
+      if (doc.querySelector("parsererror")) {
+        throw new Error("Invalid XML format.");
+      }
+
+      state.quoteName = readValueAttribute(doc.querySelector("quotename")) || "ACCQUOTE_IMPORT";
+      state.quoteNumber = readValueAttribute(doc.querySelector("userquotenumber")) || "";
+      state.quoteBrand = detectBrandFromQuote(doc);
+      const detectedVendorCode = vendorCodeFromBrand(state.quoteBrand);
+      if (detectedVendorCode) {
+        vendorCodeInput.value = detectedVendorCode;
+      } else if (normalizeVendorCode(vendorCodeInput.value) === "SLNX") {
+        // Prevent Silverline from sticking across imports when the next file is not Silverline.
+        vendorCodeInput.value = "";
+      }
+
+      const rawLineItems = Array.from(doc.querySelectorAll("lineitem"));
+      const parsed = [];
+      const parsedById = new Map();
+
+      rawLineItems.forEach((lineItem, index) => {
+        if (!isWindowLineItem(lineItem)) return;
+
+        const quantity = parseSafeInt(readValueAttribute(lineItem.querySelector("quantity")), 1);
+        const unitCost = resolveUnitCost(lineItem, quantity);
+        const description = resolveDescription(lineItem);
+        if (!description) return;
+
+        const sourceLineId = normalizeLineId(readValueAttribute(lineItem.querySelector("id")));
+
+        const parsedItem = {
+          index: parsed.length + 1,
+          quantity,
+          unitCost,
+          description: sanitizeDescription(description),
+          sourceLineId
+        };
+
+        parsed.push(parsedItem);
+        if (sourceLineId) parsedById.set(sourceLineId, parsedItem);
+      });
+
+      // Roll up separate screen child lines into their parent window unit cost.
+      rawLineItems.forEach(lineItem => {
+        if (!isScreenChildLine(lineItem)) return;
+
+        const parentLineId = normalizeLineId(readValueAttribute(lineItem.querySelector("field4")));
+        let parentItem = parentLineId ? parsedById.get(parentLineId) : null;
+        if (!parentItem) {
+          parentItem = findFallbackParentWindowItem(lineItem, parsedById);
+        }
+        if (!parentItem) return;
+
+        const childQty = parseSafeInt(readValueAttribute(lineItem.querySelector("quantity")), 0);
+        if (childQty <= 0) return;
+
+        const childExtendedCost = resolveLineExtendedCost(lineItem, childQty);
+        if (childExtendedCost <= 0) return;
+
+        const parentQty = Math.max(1, parseSafeInt(parentItem.quantity, 1));
+        parentItem.unitCost += childExtendedCost / parentQty;
+      });
+
+      state.lineItems = parsed;
+      renderPreview();
+      renderMeta();
+
+      const quoteAttrs = resolveQuoteAttributes(rawLineItems);
+      state.lastQuoteAttrs = quoteAttrs;
+      if (quoteAttrs) {
+        populateHeaderInputs(quoteAttrs, state.quoteBrand || brandFromVendorCode(normalizeVendorCode(vendorCodeInput.value || "PGYM")));
+      }
+
+      const suggested = makeSuggestedFilenameFromXmlName(sourceFileName, state.quoteName);
+      filenameSuffixInput.value = suggested;
+    }
+
+    function findFallbackParentWindowItem(screenLineItem, parsedById) {
+      const lineItemsGroup = screenLineItem.parentElement;
+      if (!lineItemsGroup) return null;
+
+      const siblings = Array.from(lineItemsGroup.children).filter(node =>
+        String(node.nodeName || "").toLowerCase() === "lineitem"
+      );
+      const currentIndex = siblings.indexOf(screenLineItem);
+      if (currentIndex < 1) return null;
+
+      for (let i = currentIndex - 1; i >= 0; i -= 1) {
+        const candidate = siblings[i];
+        if (!isWindowLineItem(candidate)) continue;
+
+        const candidateId = normalizeLineId(readValueAttribute(candidate.querySelector("id")));
+        if (!candidateId) continue;
+        const parentItem = parsedById.get(candidateId);
+        if (parentItem) return parentItem;
+      }
+
+      return null;
+    }
+
+    const VENDOR_BRAND_MAP = {
+      PGYM: "PLYGEM",
+      SUSM: "SUSSMAN",
+      ANDR: "ANDERSEN",
+      PELL: "PELLA",
+      JWLD: "JELD-WEN",
+      MARN: "MARVIN"
+    };
+
+    function brandFromVendorCode(code) {
+      return VENDOR_BRAND_MAP[String(code || "").toUpperCase()] || String(code || "").toUpperCase();
+    }
+
+    function vendorCodeFromBrand(brand) {
+      const normalizedBrand = String(brand || "").toUpperCase();
+      if (normalizedBrand === "PLYGEM") return "PGYM";
+      if (normalizedBrand === "SILVERLINE") return "SLNX";
+      return normalizedBrand ? normalizedBrand.slice(0, 4) : "";
+    }
+
+    function detectBrandFromQuote(doc) {
+      if (!doc) return "";
+      const docText = String(doc.documentElement?.textContent || "").toUpperCase();
+      if (docText.includes("SILVERLINE") || docText.includes("SIL-")) {
+        return "SILVERLINE";
+      }
+
+      if (docText.includes("PLYGEM") || docText.includes("PLY GEM") || docText.includes("PLY-GEM")) {
+        return "PLYGEM";
+      }
+
+      const cpdValues = Array.from(doc.querySelectorAll("currentstringvalue"))
+        .map(node => readValueAttribute(node).toUpperCase());
+      if (cpdValues.some(value => value.startsWith("SIL-"))) {
+        return "SILVERLINE";
+      }
+
+      if (cpdValues.some(value => /\bPLY\s*GEM\b|\bPLYGEM\b|\bPGYM\b/.test(value))) {
+        return "PLYGEM";
+      }
+
+      const vendorTextNodes = [
+        "vendorcode",
+        "vendor",
+        "manufacturer"
+      ].flatMap(tag => Array.from(doc.querySelectorAll(tag)).map(node => readValueAttribute(node).toUpperCase()));
+      if (vendorTextNodes.some(value => value.includes("SLNX") || value.includes("SILVERLINE"))) {
+        return "SILVERLINE";
+      }
+      if (vendorTextNodes.some(value => value.includes("PGYM") || value.includes("PLYGEM") || value.includes("PLY GEM"))) {
+        return "PLYGEM";
+      }
+
+      return "";
+    }
+
+    function readExtraFieldsDoc(lineItem) {
+      const node = lineItem.querySelector("extradata > extrafields");
+      if (!node) return null;
+      const raw = (node.textContent || "").trim();
+      if (!raw) return null;
+      const doc = new DOMParser().parseFromString(raw, "application/xml");
+      return doc.querySelector("parsererror") ? null : doc;
+    }
+
+    function getExtraFieldValue(innerDoc, fieldName) {
+      if (!innerDoc) return "";
+      const nodes = Array.from(innerDoc.querySelectorAll("clsnamevalue"));
+      const node = nodes.find(n => readValueAttribute(n.querySelector("name")) === fieldName);
+      return node ? readValueAttribute(node.querySelector("value")) : "";
+    }
+
+    function resolveAttributesFromLineItem(lineItem) {
+      const innerDoc = readExtraFieldsDoc(lineItem);
+      const productLine = [
+        getExtraFieldValue(innerDoc, "Description_LongDescription_Product"),
+        getExtraFieldValue(innerDoc, "Description_LongDescription_Hidden - Report"),
+        getExtraFieldValue(innerDoc, "LongDescription"),
+        getExtraFieldValue(innerDoc, "EDIString")
+      ].join(" ").toUpperCase();
+      const colorLine = [
+        getExtraFieldValue(innerDoc, "Description_LongDescription_Color/Material Type"),
+        getExtraFieldValue(innerDoc, "Description_LongDescription_Color"),
+        getExtraFieldValue(innerDoc, "LongDescription"),
+        getExtraFieldValue(innerDoc, "EDIString")
+      ].join(" ").toUpperCase();
+      const glassLine = getExtraFieldValue(innerDoc, "Description_LongDescription_Glass").toUpperCase();
+      const grilleLine = getExtraFieldValue(innerDoc, "Description_LongDescription_Grilles").toUpperCase();
+      const screenVal = getExtraFieldValue(innerDoc, "Integration_Short_Description_SCREEN");
+
+      const seriesMatch = productLine.match(/\b(\d{3,4})\b/);
+      const series = seriesMatch ? seriesMatch[1] + " SERIES" : "";
+
+      let frameType = "";
+      if (/BEVELED/.test(productLine)) frameType = "BEVELED";
+      else if (/SLIMLINE/.test(productLine)) frameType = "SLIMLINE";
+      else if (/MAXX/.test(productLine)) frameType = "MAXX";
+      else if (/STANDARD/.test(productLine)) frameType = "STANDARD";
+
+      let extColor = "";
+      let intColor = "";
+      const colorPairMatch = colorLine.match(/(?:EXTERIOR|EXT|COLOR\s+EXT)\s*(?:\/|\b)\s*(?:INTERIOR|INT)\s*=\s*([^,\n]+)\s*,\s*([^,\n]+)/);
+      const genericColorMatch = colorLine.match(/\bCOLOR\s+EXT\/INT\s*=\s*([^,\n]+)\s*,\s*([^,\n]+)/);
+      const exteriorInteriorMatch = colorLine.match(/\bEXTERIOR\s*=\s*([^,|\n]+?)\s*[,|]\s*INTERIOR\s*=\s*([^,|\n]+?)(?=\s*(?:\||,|\bUNIT\b|\bPRODUCT\b|\bROUGH\s+OPENING\b|\bWRAPPING\b|\bGLASS\b|\bGRILLES\b|$))/);
+      const ediColorMatch = colorLine.match(/\bEXTERIOR\s+COLOR\s*\/\s*FINISH\s*=\s*([^|,\n]+).*?\bINTERIOR\s+COLOR\s*\/\s*FINISH\s*=\s*([^|,\n]+)/);
+      if (ediColorMatch) {
+        extColor = cleanHeaderColorValue(ediColorMatch[1]);
+        intColor = cleanHeaderColorValue(ediColorMatch[2]);
+      } else if (colorPairMatch) {
+        extColor = cleanHeaderColorValue(colorPairMatch[1]);
+        intColor = cleanHeaderColorValue(colorPairMatch[2]);
+      } else if (genericColorMatch) {
+        extColor = cleanHeaderColorValue(genericColorMatch[1]);
+        intColor = cleanHeaderColorValue(genericColorMatch[2]);
+      } else if (exteriorInteriorMatch) {
+        extColor = cleanHeaderColorValue(exteriorInteriorMatch[1]);
+        intColor = cleanHeaderColorValue(exteriorInteriorMatch[2]);
+      }
+      const colorCode = extColor && intColor ? extColor + "/" + intColor : (extColor || intColor);
+
+      let glassType = "";
+      if (/LOW-E|\bLE\b/.test(glassLine)) glassType = "LOW-E";
+      else if (/CLEAR/.test(glassLine)) glassType = "CLEAR";
+      else if (/BRONZE/.test(glassLine)) glassType = "BRONZE TINT";
+      else if (/GRAY/.test(glassLine)) glassType = "GRAY TINT";
+
+      let grilleType = "";
+      if (/\bGBG\b/.test(grilleLine)) grilleType = "GBG";
+      else if (/\bSDL\b/.test(grilleLine)) grilleType = "SDL";
+      else if (/COLONIAL/.test(grilleLine)) grilleType = "GBG";
+      else if (/PRAIRIE/.test(grilleLine)) grilleType = "PRAIRIE";
+
+      const hasScreen = Boolean(screenVal && screenVal.trim());
+      return { series, frameType, colorCode, glassType, grilleType, hasScreen };
+    }
+
+    function mostCommonValue(values) {
+      const nonEmpty = values.filter(Boolean);
+      if (!nonEmpty.length) return "";
+      const counts = {};
+      nonEmpty.forEach(v => { counts[v] = (counts[v] || 0) + 1; });
+      return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+    }
+
+    function cleanHeaderColorValue(value) {
+      return String(value || "")
+        .toUpperCase()
+        .replace(/\s+/g, " ")
+        .replace(/\b(?:ROUGH\s+OPENING|FRAME|PRODUCT|UNIT\s+TYPE|UNIT\s+PERFORMANCE|GLASS|GRILLES|WRAPPING)\b[\s\S]*$/, "")
+        .replace(/[|,;:\-\s]+$/, "")
+        .trim();
+    }
+
+    function resolveQuoteAttributes(rawLineItems) {
+      const windowItems = rawLineItems.filter(li => isWindowLineItem(li));
+      if (!windowItems.length) return null;
+      const all = windowItems.map(li => resolveAttributesFromLineItem(li));
+      return {
+        series: mostCommonValue(all.map(a => a.series)),
+        frameType: mostCommonValue(all.map(a => a.frameType)),
+        colorCode: mostCommonValue(all.map(a => a.colorCode)),
+        glassType: mostCommonValue(all.map(a => a.glassType)),
+        grilleType: mostCommonValue(all.map(a => a.grilleType)),
+        hasScreen: all.some(a => a.hasScreen)
+      };
+    }
+
+    function populateHeaderInputs(attrs, brand) {
+      document.getElementById("headerLine1").value = [brand, attrs.series].filter(Boolean).join(" ");
+      document.getElementById("headerLine2").value = [attrs.frameType, attrs.colorCode].filter(Boolean).join(" ");
+      const glassParts = [];
+      if (attrs.glassType) glassParts.push(attrs.glassType);
+      if (attrs.grilleType) glassParts.push(attrs.grilleType);
+      if (attrs.hasScreen) glassParts.push("W/SCREENS");
+      document.getElementById("headerLine3").value = glassParts.join(" ");
+      document.getElementById("headerSection").style.display = "";
+    }
+
+    function isWindowLineItem(lineItem) {
+      // Screen child lines are never independent line items — they roll cost into the parent window.
+      if (isScreenChildLine(lineItem)) return false;
+      const hasWindowNode = Boolean(lineItem.querySelector("extradata > windows > window"));
+      const category1 = readValueAttribute(lineItem.querySelector("category1")).toUpperCase();
+      const isDoor = readValueAttribute(lineItem.querySelector("IsDoor")).toLowerCase() === "true";
+      // AccuQuote can mark multi-slide assemblies as doors even when they should be included here.
+      if (isDoor && !isMultiSlideAssembly(lineItem)) return false;
+      if (hasWindowNode) return true;
+      if (category1 === "SW") return true;
+      return false;
+    }
+
+    function isMultiSlideAssembly(lineItem) {
+      const productCode = readValueAttribute(lineItem.querySelector("productcode")).toUpperCase();
+      if (productCode.startsWith("MS")) return true;
+
+      const innerDoc = readExtraFieldsDoc(lineItem);
+      const productLine = getExtraFieldValue(innerDoc, "Description_LongDescription_Product").toUpperCase();
+      const shortDesc = getExtraFieldValue(innerDoc, "Integration_Short_Description").toUpperCase();
+      const ediString = getExtraFieldValue(innerDoc, "EDIString").toUpperCase();
+      const combined = [productLine, shortDesc, ediString].join(" ");
+
+      return /\bMULTI[-\s]?SLIDE\b|\bMULTIBYPASSDOOR\b|\bDOUBLESLIDINGDOOR\b|\bBYPASS\s+DOOR\b|\bTWO\s+PANEL\s+DOOR\b/.test(combined);
+    }
+
+    function readValueAttribute(node) {
+      if (!node) return "";
+      if (node.hasAttribute && node.hasAttribute("Value")) {
+        return node.getAttribute("Value") || "";
+      }
+      return (node.textContent || "").trim();
+    }
+
+    function parseSafeNumber(value, fallback) {
+      const n = Number.parseFloat(String(value || "").trim());
+      return Number.isFinite(n) ? n : (fallback == null ? 0 : fallback);
+    }
+
+    function parseSafeInt(value, fallback) {
+      const n = Number.parseInt(String(value || "").trim(), 10);
+      return Number.isFinite(n) ? n : (fallback == null ? 1 : fallback);
+    }
+
+    function normalizeLineId(value) {
+      return String(value || "").trim().toLowerCase();
+    }
+
+    function resolveUnitCost(lineItem, quantity) {
+      const customer = parseSafeNumber(readValueAttribute(lineItem.querySelector("customerprice")), 0);
+      if (customer > 0) return customer;
+      const dealer = parseSafeNumber(readValueAttribute(lineItem.querySelector("dealerprice")), 0);
+      if (dealer > 0) return dealer;
+      const list = parseSafeNumber(readValueAttribute(lineItem.querySelector("listprice")), 0);
+      if (list > 0) return list;
+      const ext = parseSafeNumber(readValueAttribute(lineItem.querySelector("customerextendedprice")), 0);
+      if (ext > 0 && quantity > 0) return ext / quantity;
+      return 0;
+    }
+
+    function resolveLineExtendedCost(lineItem, quantity) {
+      const extCustomer = parseSafeNumber(readValueAttribute(lineItem.querySelector("customerextendedprice")), 0);
+      if (extCustomer > 0) return extCustomer;
+      const extDealer = parseSafeNumber(readValueAttribute(lineItem.querySelector("dealerextendedprice")), 0);
+      if (extDealer > 0) return extDealer;
+      const unit = resolveUnitCost(lineItem, quantity);
+      return unit * Math.max(1, parseSafeInt(quantity, 1));
+    }
+
+    function isScreenChildLine(lineItem) {
+      const isScreen = readValueAttribute(lineItem.querySelector("IsScreen")).toLowerCase() === "true";
+      if (isScreen) return true;
+      const field5 = readValueAttribute(lineItem.querySelector("field5")).toUpperCase();
+      if (field5.includes("SCREEN CHILD LINE")) return true;
+      const shortDesc = readShortDescriptionFromExtraFields(lineItem).toUpperCase();
+      return shortDesc.startsWith("SCREEN ");
+    }
+
+    function resolveDescription(lineItem) {
+      const compactDesc = buildCompactWindowDescription(lineItem);
+      if (compactDesc) return compactDesc;
+
+      const shortDesc = readShortDescriptionFromExtraFields(lineItem);
+      if (shortDesc) return shortDesc;
+
+      const fullDescription = (lineItem.querySelector("description")?.textContent || "").trim();
+      if (fullDescription) {
+        const firstLine = fullDescription.split(/\r?\n/).map(part => part.trim()).find(Boolean);
+        if (firstLine) return firstLine;
+      }
+
+      const productCode = readValueAttribute(lineItem.querySelector("productcode"));
+      const unitSize = readValueAttribute(lineItem.querySelector("extradata > overallunitsize"));
+      return [productCode, unitSize].filter(Boolean).join(" ").trim();
+    }
+
+    function buildCompactWindowDescription(lineItem) {
+      const shortDesc = sanitizeDescription(readShortDescriptionFromExtraFields(lineItem));
+      const fullDesc = sanitizeDescription(lineItem.querySelector("description")?.textContent || "");
+      const innerDoc = readExtraFieldsDoc(lineItem);
+
+      const sizeCode = resolveSizeCode(shortDesc, fullDesc, innerDoc);
+      const typeCode = resolveTypeCode(shortDesc, fullDesc, lineItem);
+      const gridCode = resolveGridCode(shortDesc, fullDesc, typeCode);
+      const attributeTags = resolveWindowAttributeTags(lineItem);
+
+      const unitSuffix = resolveUnitSuffix(lineItem);
+      if (!sizeCode || !typeCode) return "";
+      const parts = [sizeCode];
+      if (typeCode === "PATIO SLIDER") {
+        parts.push(typeCode);
+        const panelOperation = resolvePatioSliderOperation(lineItem, shortDesc, fullDesc);
+        if (panelOperation) parts.push(panelOperation);
+      } else {
+        parts.push(typeCode);
+      }
+      if (gridCode) parts.push(gridCode);
+      attributeTags.forEach(tag => parts.push(tag));
+      if (unitSuffix) parts.push(unitSuffix);
+      return parts.join(" ").trim();
+    }
+
+    function resolvePatioSliderOperation(lineItem, shortDesc, fullDesc) {
+      const innerDoc = readExtraFieldsDoc(lineItem);
+      const multipanelLine = getExtraFieldValue(innerDoc, "Description_LongDescription_Multipanel Options").toUpperCase();
+      const unitTypeLine = getExtraFieldValue(innerDoc, "Description_LongDescription_Unit Type").toUpperCase();
+      const ediString = getExtraFieldValue(innerDoc, "EDIString").toUpperCase();
+      const source = [multipanelLine, unitTypeLine, fullDesc, shortDesc].join(" ");
+
+      const directBypass = source.match(/\b([OXLR]{2,4})\s+BYPASS\b/);
+      if (directBypass) return normalizePatioPanelOperation(directBypass[1]);
+
+      const unitTypeOperation = source.match(/\bUNIT\s+TYPE\s+([OXLR]{2,4})\b/);
+      if (unitTypeOperation) return normalizePatioPanelOperation(unitTypeOperation[1]);
+
+      const panelTuple = source.match(/\bPANELS?\s*=\s*\d+\s*,\s*([OXLR]{2,4})\b/);
+      if (panelTuple) return normalizePatioPanelOperation(panelTuple[1]);
+
+      const ediOperation = ediString.match(/\bPANEL OPERATION=([A-Z]{2,4})\b/);
+      if (ediOperation) return normalizePatioPanelOperation(ediOperation[1]);
+
+      const ediVenting = ediString.match(/\bOPERATION\s*\/\s*VENTING=([A-Z]{2,4})\b/);
+      if (ediVenting) return normalizePatioPanelOperation(ediVenting[1]);
+
+      return "";
+    }
+
+    function normalizePatioPanelOperation(rawValue) {
+      const normalized = String(rawValue || "").toUpperCase().replace(/[^A-Z]/g, "").replace(/[LR]/g, "X");
+      return /^[OX]{2,4}$/.test(normalized) ? normalized : "";
+    }
+
+    function resolveWindowAttributeTags(lineItem) {
+      const innerDoc = readExtraFieldsDoc(lineItem);
+      const glassLine = getExtraFieldValue(innerDoc, "Description_LongDescription_Glass").toUpperCase();
+      const unitTypeLine = getExtraFieldValue(innerDoc, "Description_LongDescription_Unit Type").toUpperCase();
+      const ediString = getExtraFieldValue(innerDoc, "EDIString").toUpperCase();
+
+      const tags = [];
+      if (/\bTEMPERED\b/.test(glassLine) || /\bGLASS STRENGTH=TEMPERED\b/.test(ediString)) {
+        tags.push("TEMP");
+      }
+
+      const hasDrywall = /\bDRYWALL\b/.test(unitTypeLine) || /\bGLAZING METHOD=DRYWALL\b/.test(ediString);
+      const hasNonDrywall = /\bNON-DRYWALL\b/.test(unitTypeLine) || /\bGLAZING METHOD=NON-DRYWALL\b/.test(ediString);
+      if (hasDrywall && !hasNonDrywall) {
+        tags.push("DRYWALL");
+      }
+
+      if (/\bSPANDREL\b/.test(glassLine) || /\bGLASS TINT=SPANDREL\b/.test(ediString)) {
+        tags.push("SPANDREL");
+      }
+
+      return tags;
+    }
+
+    function resolveUnitSuffix(lineItem) {
+      // Extract Number Units Wide from EDI string to determine TWIN, TRIPLE, etc.
+      const innerDoc = readExtraFieldsDoc(lineItem);
+      const ediValue = getExtraFieldValue(innerDoc, "EDIString");
+      const ediMatch = String(ediValue || "").match(/Number Units Wide=(\d+)/);
+      if (!ediMatch) return "";
+      
+      const unitsWide = parseSafeInt(ediMatch[1], 1);
+      if (unitsWide === 1) return "";
+      const unitLabels = ["", "SINGLE", "TWIN", "TRIPLE", "QUAD", "PENT", "HEX"];
+      return unitLabels[unitsWide] || (unitsWide + "WAY");
+    }
+
+    function resolveSizeCode(shortDesc, fullDesc, innerDoc) {
+      const sizePairToCode = (width, height) => {
+        const parsedWidth = parseSafeInt(width, 0);
+        const parsedHeight = parseSafeInt(height, 0);
+        if (!parsedWidth || !parsedHeight) return "";
+        return String(parsedWidth).padStart(2, "0") + String(parsedHeight).padStart(2, "0");
+      };
+
+      const dimensionFields = [
+        getExtraFieldValue(innerDoc, "Description_LongDescription_Dimensions"),
+        getExtraFieldValue(innerDoc, "Description_LongDescription_Wrapping - Overall Dimensions"),
+        getExtraFieldValue(innerDoc, "LongDescription"),
+        getExtraFieldValue(innerDoc, "EDIString"),
+        fullDesc
+      ].map(value => String(value || "").toUpperCase());
+
+      for (const source of dimensionFields) {
+        const callSizeMatch = source.match(/\bCALL SIZE\s*=?\s*(\d+)-(\d{1,2})[^0-9]+(\d+)-(\d{1,2})\b/);
+        if (callSizeMatch) {
+          const width = String((parseSafeInt(callSizeMatch[1], 0) * 10) + parseSafeInt(callSizeMatch[2], 0));
+          const height = String((parseSafeInt(callSizeMatch[3], 0) * 10) + parseSafeInt(callSizeMatch[4], 0));
+          return width + height;
+        }
+
+        const callWidthHeightMatch = source.match(/\bCALL\s+WIDTH\s*=\s*(\d+)-(\d{1,2})(?!\d).*?\bCALL\s+HEIGHT\s*=\s*(\d+)-(\d{1,2})(?!\d)\b/);
+        if (callWidthHeightMatch) {
+          const width = String((parseSafeInt(callWidthHeightMatch[1], 0) * 10) + parseSafeInt(callWidthHeightMatch[2], 0));
+          const height = String((parseSafeInt(callWidthHeightMatch[3], 0) * 10) + parseSafeInt(callWidthHeightMatch[4], 0));
+          return width + height;
+        }
+
+        const callWidthOnlyMatch = source.match(/\bCALL\s+WIDTH\s*=\s*(\d+)-(\d{1,2})(?!\d)\b/);
+        const callHeightOnlyMatch = source.match(/\bCALL\s+HEIGHT\s*=\s*(\d+)-(\d{1,2})(?!\d)\b/);
+        if (callWidthOnlyMatch && callHeightOnlyMatch) {
+          const width = String((parseSafeInt(callWidthOnlyMatch[1], 0) * 10) + Math.round(parseSafeNumber(callWidthOnlyMatch[2], 0)));
+          const height = String((parseSafeInt(callHeightOnlyMatch[1], 0) * 10) + Math.round(parseSafeNumber(callHeightOnlyMatch[2], 0)));
+          return width + height;
+        }
+      }
+
+      const compactPartSizeMatch = shortDesc.match(/^\s*(\d{4})\b/);
+      if (compactPartSizeMatch) return compactPartSizeMatch[1];
+
+      const sizePairMatch = shortDesc.match(/\b(\d{1,2})\s*[xX]\s*(\d{1,2})\b/);
+      if (sizePairMatch) return sizePairToCode(sizePairMatch[1], sizePairMatch[2]);
+
+      const clMatch = shortDesc.match(/\bCL\s+(\d{2})\s+(\d{2})(?:-\d+)?\b/);
+      if (clMatch) return clMatch[1] + clMatch[2];
+
+      const shortMatch = shortDesc.match(/\b(\d{2})\s+(\d{2})(?:-\d+)?\b/);
+      if (shortMatch) return shortMatch[1] + shortMatch[2];
+
+      const frameSizeMatch = fullDesc.match(/\bFRAME\s+WIDTH\s*=\s*(\d+)\b[\s\S]*?\bFRAME\s+HEIGHT\s*=\s*(\d+)\b/);
+      if (frameSizeMatch) return sizePairToCode(frameSizeMatch[1], frameSizeMatch[2]);
+
+      const overallSizeMatch = fullDesc.match(/\bOVERALL\s+(?:UNIT|ROUGH\s+OPENING)\s*=\s*(\d+(?:\.\d+)?)\s*"?\s*[xX]\s*(\d+(?:\.\d+)?)\s*"?/);
+      if (overallSizeMatch) return sizePairToCode(overallSizeMatch[1], overallSizeMatch[2]);
+
+      return "";
+    }
+
+    function resolveTypeCode(shortDesc, fullDesc, lineItem) {
+      // Use shortDesc first (Integration_Short_Description encodes the true type).
+      // Only fall back to fullDesc if shortDesc has no recognizable keyword.
+      const short = String(shortDesc || "").toUpperCase();
+      const full = String(fullDesc || "").toUpperCase();
+      const replacementPartType = resolveReplacementPartType(lineItem, short, full);
+      if (replacementPartType) return replacementPartType;
+
+      if (/\bDS\b|\bDIRECT SET\b|\bDIRECTSET\b/.test(short)) return "FXD";
+      if (/\bSH\b/.test(short)) return "SH";
+      if (/\bDH\b/.test(short)) return "DH";
+      if (/\bMULTI[-\s]?SLIDE\b|\bBYPASS\s+DOOR\b|\bTWO\s+PANEL\s+DOOR\b/.test(short)) return "PATIO SLIDER";
+      if (/\b2SL\b|\b3SL\b|\bSL\b/.test(short)) return "SLIDER";
+      if (/\bCAS\b/.test(short)) return "CASEMENT";
+      if (/\bAWN\b/.test(short)) return "AWNING";
+      if (/\bFIX\b|\bFIXED\b/.test(short)) return "FXD";
+
+      // Avoid false SH/DH matches from phrases like "Matching Window Type = Single Hung".
+      const safeFull = full
+        .replace(/MATCHING\s+WINDOW\s+TYPE\s*=\s*SINGLE\s+HUNG/g, "")
+        .replace(/MATCHING\s+WINDOW\s+TYPE\s*=\s*DOUBLE\s+HUNG/g, "");
+
+      const innerDoc = readExtraFieldsDoc(lineItem);
+      const productLine = getExtraFieldValue(innerDoc, "Description_LongDescription_Product").toUpperCase();
+      const ediString = getExtraFieldValue(innerDoc, "EDIString").toUpperCase();
+      const fallbackSource = [safeFull, productLine, ediString].join(" ");
+
+      if (/\bPRODUCT\s*=\s*DIRECTSET\b|\bDIRECT\s+SET\b|\bDIRECTSET\b|\bFIXED\b/.test(fallbackSource)) return "FXD";
+      if (/\bPRODUCT\s*=\s*SINGLEHUNG\b|\bSINGLE\s+HUNG\b/.test(fallbackSource)) return "SH";
+      if (/\bPRODUCT\s*=\s*DOUBLEHUNG\b|\bDOUBLE\s+HUNG\b/.test(fallbackSource)) return "DH";
+      if (/\bPRODUCT\s*=\s*MULTIBYPASSDOOR\b|\bPRODUCT\s*=\s*DOUBLESLIDINGDOOR\b|\bMULTI[-\s]?SLIDE\b|\bBYPASS\s+DOOR\b|\bTWO\s+PANEL\s+DOOR\b/.test(fallbackSource)) return "PATIO SLIDER";
+      if (/\bPRODUCT\s*=\s*SINGLESLIDER\b|\bPRODUCT\s*=\s*SLIDER\b|\bSLIDER\b/.test(fallbackSource)) return "SLIDER";
+      if (/\bPRODUCT\s*=\s*CASEMENT\b|\bCASEMENT\b/.test(fallbackSource)) return "CASEMENT";
+      if (/\bPRODUCT\s*=\s*AWNING\b|\bAWNING\b/.test(fallbackSource)) return "AWNING";
+      return "WINDOW";
+    }
+
+    function resolveReplacementPartType(lineItem, shortDesc, fullDesc) {
+      const innerDoc = readExtraFieldsDoc(lineItem);
+      const unitTypeLine = getExtraFieldValue(innerDoc, "Description_LongDescription_Unit Type").toUpperCase();
+      const hiddenReportLine = getExtraFieldValue(innerDoc, "Description_LongDescription_Hidden - Report").toUpperCase();
+      const productLine = getExtraFieldValue(innerDoc, "Description_LongDescription_Product").toUpperCase();
+      const ediString = getExtraFieldValue(innerDoc, "EDIString").toUpperCase();
+      const source = [shortDesc, fullDesc, unitTypeLine, hiddenReportLine, productLine, ediString].join(" ");
+
+      const hasTopLocation = /\bREPLACEMENT PART LOCATION=TOP(?:\s+ONLY)?\b/.test(source);
+      const hasBottomLocation = /\bREPLACEMENT PART LOCATION=BOTTOM(?:\s+ONLY)?\b/.test(source);
+      const hasGlassOnly = /\bUNIT TYPE=GLASS ONLY\b|\bGLASS ONLY\b/.test(source);
+      const hasSashOnly = /\bUNIT TYPE=SASH ONLY\b|\bSASH ONLY\b/.test(source);
+      const hasGlassTopLocation = /\bGLASS LOCATION\s*=\s*TOP\b/.test(source);
+      const hasGlassBottomLocation = /\bGLASS LOCATION\s*=\s*BOTTOM\b/.test(source);
+
+      if (hasGlassOnly && hasGlassTopLocation) return "TOP GLASS";
+      if (hasSashOnly && hasGlassBottomLocation) return "BOTTOM SASH";
+      if (hasTopLocation && hasGlassOnly) return "TOP GLASS";
+      if (hasBottomLocation && hasSashOnly) return "BOTTOM SASH";
+      if (/\bTOP\s+GLASS\b/.test(source)) return "TOP GLASS";
+      if (/\bBOTTOM\s+SASH\b/.test(source)) return "BOTTOM SASH";
+      if (/\bTOP\b/.test(source) && /\bGLASS\b/.test(source) && /\bREP(?:LACEMENT)?\s+GLASS\b/.test(source)) return "TOP GLASS";
+      if (/\bBOTTOM\b/.test(source) && /\bSASH\b/.test(source) && /\bREP(?:LACEMENT)?\s+GLASS\b/.test(source)) return "BOTTOM SASH";
+      return "";
+    }
+
+    function resolveGridCode(shortDesc, fullDesc, typeCode) {
+      const source = (shortDesc + " " + fullDesc).toUpperCase();
+      const shortSource = String(shortDesc || "").toUpperCase();
+      const useLiteNotation = typeCode === "FXD" || typeCode === "TOP GLASS" || typeCode === "BOTTOM SASH";
+
+      const liteMatch = source.match(/\b(\d+)\s*LT\b/);
+      if (liteMatch) {
+        return liteMatch[1] + "LT";
+      }
+
+      const grillePattern = source.match(/\b(\d{1,2})W(\d{1,2})H\b/);
+      if (grillePattern) {
+        const wide = parseSafeInt(grillePattern[1], 1);
+        const high = parseSafeInt(grillePattern[2], 1);
+        const isReplacementHalf = (typeCode === "TOP GLASS" || typeCode === "BOTTOM SASH")
+          && /\bTOP\s+ONLY\b|\bBOTTOM\s+ONLY\b|\bGLASS\s+LOCATION\s*=\s*(?:TOP|BOTTOM)\b/.test(source);
+        if (isReplacementHalf) return (wide * high) + "LT";
+        const lites = wide * high;
+        if (useLiteNotation) return lites + "LT";
+        if (typeCode === "SH" || typeCode === "DH") return lites + "/" + lites;
+        return wide + "/" + high;
+      }
+
+      const slashGrid = shortSource.match(/\b(\d{1,2})\/(\d{1,2})\b/);
+      if (slashGrid) return slashGrid[1] + "/" + slashGrid[2];
+      if (typeCode === "PATIO SLIDER") return "";
+      if (/\bNO GRID\b/.test(source)) return (typeCode === "SH" || typeCode === "DH" || typeCode === "SLIDER") ? "1/1" : (typeCode === "FXD") ? "1LT" : "NO GRID";
+      if (useLiteNotation) return "1LT";
+      return (typeCode === "SH" || typeCode === "DH" || typeCode === "SLIDER") ? "1/1" : "NO GRID";
+    }
+
+    function readShortDescriptionFromExtraFields(lineItem) {
+      const extraFieldsNode = lineItem.querySelector("extradata > extrafields");
+      if (!extraFieldsNode) return "";
+      const rawXml = (extraFieldsNode.textContent || "").trim();
+      if (!rawXml) return "";
+
+      const innerDoc = new DOMParser().parseFromString(rawXml, "application/xml");
+      if (innerDoc.querySelector("parsererror")) return "";
+
+      const allValues = Array.from(innerDoc.querySelectorAll("clsnamevalue"));
+      const target = allValues.find(node => readValueAttribute(node.querySelector("name")) === "Integration_Short_Description");
+      return target ? readValueAttribute(target.querySelector("value")) : "";
+    }
+
+    function sanitizeDescription(text) {
+      return String(text || "")
+        .replace(/\r/g, " ")
+        .replace(/\n/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toUpperCase();
+    }
+
+    function renderMeta() {
+      const totalQty = state.lineItems.reduce((sum, row) => sum + row.quantity, 0);
+      const totalValue = state.lineItems.reduce((sum, row) => sum + (row.unitCost * row.quantity), 0);
+
+      metaBox.style.display = "";
+      metaBox.textContent = [
+        "Quote Name: " + (state.quoteName || "-"),
+        "Quote Number: " + (state.quoteNumber || "-"),
+        "Detected Line Items: " + state.lineItems.length,
+        "Total Units: " + totalQty,
+        "Estimated Value: $" + totalValue.toFixed(2)
+      ].join("\n");
+    }
+
+    function renderPreview() {
+      if (state.lineItems.length === 0) {
+        previewBody.innerHTML = '<tr><td colspan="4">No line items found.</td></tr>';
+        return;
+      }
+
+      previewBody.innerHTML = state.lineItems.map(item => {
+        return [
+          "<tr>",
+          '<td class="mono">' + item.index + "</td>",
+          '<td class="mono">' + item.quantity + "</td>",
+          '<td class="mono">$' + item.unitCost.toFixed(2) + "</td>",
+          "<td>" + escapeHtml(item.description) + "</td>",
+          "</tr>"
+        ].join("");
+      }).join("");
+    }
+
+    function buildAndRenderScript() {
+      const vendorCode = normalizeVendorCode(vendorCodeInput.value || "PGYM") || "PGYM";
+      // Only write back to the field if the user already has a value; don't populate with fallback when blank.
+      if (vendorCodeInput.value.trim()) vendorCodeInput.value = vendorCode;
+
+      const lines = [];
+      lines.push("# POS Estimate Script");
+      lines.push("# Source Quote: " + (state.quoteName || "UNKNOWN"));
+      if (state.quoteNumber) lines.push("# Source Quote Number: " + state.quoteNumber);
+      lines.push("# Generated: " + new Date().toLocaleString());
+      lines.push("# Total Items: " + state.lineItems.length);
+      lines.push("");
+
+      const headerLines = ["headerLine1", "headerLine2", "headerLine3"]
+        .map(id => (document.getElementById(id)?.value || "").trim().toUpperCase())
+        .filter(Boolean);
+
+      if (headerLines.length > 0) {
+        lines.push("# --- Estimate Header ---");
+        if (state.quoteNumber) {
+          lines.push('send "88400<cr>' + vendorCode + '<cr>QTE#' + escapeDescription(state.quoteNumber) + '<cr><cr>"');
+        }
+        headerLines.forEach(line => {
+          lines.push('send "88400<cr>' + vendorCode + '<cr>' + escapeDescription(line) + '<cr><cr>"');
+        });
+        lines.push('send "88400<cr>' + vendorCode + '<cr> <cr><cr>"');
+        lines.push("");
+      }
+
+      state.lineItems.forEach((item, idx) => {
+        const commandCode = resolveLineCommandCode(item);
+        const itemLabel = commandCode === "88422" ? "Door" : "Window";
+        lines.push("# Item " + (idx + 1) + ": " + itemLabel);
+        lines.push(buildWindowSendCommand(vendorCode, item.description, item.unitCost, item.quantity, commandCode));
+      });
+
+      state.generatedScript = lines.join("\n");
+      outputBox.value = state.generatedScript;
+    }
+
+    function resolveLineCommandCode(item) {
+      const description = String(item?.description || "").toUpperCase();
+      return /\bPATIO\s+SLIDER\b/.test(description) ? "88422" : "88425";
+    }
+
+    function buildWindowSendCommand(vendorCode, description, cost, quantity, commandCode) {
+      return 'send "' +
+        (commandCode || "88425") +
+        '<cr>' +
+        vendorCode +
+        '<cr>' +
+        escapeDescription(description) +
+        '<cr><cr>C<cr>' +
+        Number(cost || 0).toFixed(2) +
+        '<cr><cr>' +
+        Math.max(1, parseSafeInt(quantity, 1)) +
+        '<cr><cr>"';
+    }
+
+    function escapeDescription(desc) {
+      return String(desc || "")
+        .replace(/"/g, '\\"')
+        .replace(/\r/g, " ")
+        .replace(/\n/g, " ")
+        .trim();
+    }
+
+    function makeSuggestedFilename(quoteName) {
+      const clean = String(quoteName || "ACCQUOTE_IMPORT")
+        .toUpperCase()
+        .replace(/[^A-Z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "");
+      return (clean || "ACCQUOTE_IMPORT") + ".psl";
+    }
+
+    function makeSuggestedFilenameFromXmlName(xmlFileName, quoteNameFallback) {
+      const baseName = String(xmlFileName || "")
+        .replace(/\.[^.]+$/, "")
+        .trim();
+      return makeSuggestedFilename(baseName || quoteNameFallback);
+    }
+
+    function buildDownloadSoftButtonCommand(fileName) {
+      return "run {..\\..\\Downloads\\" + fileName + "}";
+    }
+
+    async function copyTextToClipboard(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+
+      outputBox.focus();
+      outputBox.select();
+      const ok = document.execCommand("copy");
+      if (!ok) throw new Error("Clipboard not available.");
+      return true;
+    }
+
+    function resolvePslFileName() {
+      const fileNameRaw = filenameSuffixInput.value.trim() || "estimate_script.psl";
+      return fileNameRaw.toLowerCase().endsWith(".psl") ? fileNameRaw : fileNameRaw + ".psl";
+    }
+
+    async function downloadScript() {
+      if (!state.generatedScript) return;
+
+      const fileName = resolvePslFileName();
+      const blob = new Blob([state.generatedScript], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+
+      const softButtonCommand = buildDownloadSoftButtonCommand(fileName);
+      try {
+        await copyTextToClipboard(softButtonCommand);
+      } catch (error) {
+        console.error("Copy failed:", error);
+      }
+    }
+
+    async function copyScript() {
+      const fileName = resolvePslFileName();
+      const softButtonCommand = buildDownloadSoftButtonCommand(fileName);
+
+      try {
+        await copyTextToClipboard(softButtonCommand);
+        return true;
+      } catch (error) {
+        console.error("Copy failed:", error);
+        return false;
+      }
+    }
+
+    function escapeHtml(text) {
+      return String(text || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+  </script>
+</body>
+</html>
