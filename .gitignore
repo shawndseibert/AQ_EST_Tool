@@ -1,0 +1,6 @@
+# Ignore everything by default
+*
+
+# Allow only publish files to be tracked
+!.gitignore
+!index.html
